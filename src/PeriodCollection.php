@@ -80,6 +80,25 @@ class PeriodCollection implements ArrayAccess, Iterator, Countable
         return $boundaries->subtract(...$this);
     }
 
+    public function overlaps(): static
+    {
+        $overlaps = static::make();
+
+        $others = clone $this;
+
+        foreach ($this as $key => $period) {
+            foreach ($others as $otherKey => $other) {
+                if ($key === $otherKey || ! $period->overlap($other)) {
+                    continue;
+                }
+
+                $overlaps[] = $period->overlap($other);
+            }
+        }
+
+        return $overlaps;
+    }
+
     public function intersect(Period $intersection): static
     {
         $intersected = static::make();
@@ -142,6 +161,11 @@ class PeriodCollection implements ArrayAccess, Iterator, Countable
     public function isEmpty(): bool
     {
         return count($this->periods) === 0;
+    }
+
+    public function isStreamlined(): bool
+    {
+        return $this->gaps()->isEmpty() && $this->overlaps()->isEmpty();
     }
 
     public function subtract(PeriodCollection | Period $others): static
